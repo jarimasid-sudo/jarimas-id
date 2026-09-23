@@ -19,6 +19,7 @@ import {
   Loader2,
   Users,
   Baby,
+  BarChart3,
 } from "lucide-react"
 
 export default function DashboardLayout({
@@ -152,6 +153,17 @@ export default function DashboardLayout({
               >
                 <Users className="h-3.5 w-3.5" />
                 <span>Kelompok & Anggota</span>
+              </Link>
+              <Link
+                href="/reports"
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                  pathname.startsWith("/reports")
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                }`}
+              >
+                <BarChart3 className="h-3.5 w-3.5" />
+                <span>Rekapitulasi & Ekspor</span>
               </Link>
             </nav>
 
