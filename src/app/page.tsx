@@ -96,15 +96,15 @@ export default function Home() {
 
             {/* Slogan / Headline Utama with Big Gradient Text */}
             <div className="space-y-4">
-              <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black font-heading tracking-tight leading-[1.12] uppercase">
-                <span className="text-foreground">“KETIKA JARI BERKATA, </span>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black font-heading tracking-tight leading-[1.12] uppercase">
+                <span className="text-foreground">“KETIKA JARI MEWUJUDKAN KATA, </span>
                 <span className="bg-linear-to-r from-teal-500 via-indigo-500 to-rose-500 dark:from-teal-400 dark:via-sky-400 dark:to-rose-400 bg-clip-text text-transparent drop-shadow-xs">
                   JARINGAN TERCIPTA
                 </span>
                 <span className="text-foreground">”</span>
               </h1>
               <p className="text-sm sm:text-base md:text-lg font-medium text-muted-foreground max-w-2xl mx-auto">
-                Platform Sinergi Integrasi Data Posyandu, PAUD/PNF, RT/RW, dan Pemerintah Kota Tegal
+                Platform Sinergi Integrasi Data Posyandu, Satuan PAUD dan PNF, RT, dan Komunitas Lokal lainnya
               </p>
             </div>
 
