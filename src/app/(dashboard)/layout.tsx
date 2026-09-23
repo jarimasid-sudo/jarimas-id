@@ -4,7 +4,6 @@ import { useEffect, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
-import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,6 +22,7 @@ import {
   Crown,
   ShieldCheck,
   UserCheck,
+  UserCog,
 } from "lucide-react"
 
 export default function DashboardLayout({
@@ -121,9 +121,9 @@ export default function DashboardLayout({
       const supabase = createClient()
       await supabase.auth.signOut()
       router.refresh()
-      router.push("/login")
+      router.push("/")
     } catch {
-      router.push("/login")
+      router.push("/")
     }
   }
 
@@ -238,14 +238,7 @@ export default function DashboardLayout({
             </div>
 
             <DropdownMenu>
-              <DropdownMenuTrigger
-                render={
-                  <Button
-                    variant="outline"
-                    className="flex items-center gap-2 h-9 px-3 rounded-full text-xs font-medium border-border/80"
-                  />
-                }
-              >
+              <DropdownMenuTrigger className="flex items-center gap-2 h-9 px-3 rounded-full text-xs font-medium border border-border/80 bg-background hover:bg-muted/60 transition-colors cursor-pointer shadow-xs outline-none">
                 <div className={`flex h-6 w-6 items-center justify-center rounded-full font-bold text-xs ${
                   isSuperAdmin
                     ? "bg-amber-500/20 text-amber-600 dark:text-amber-400"
@@ -253,7 +246,7 @@ export default function DashboardLayout({
                 }`}>
                   {isSuperAdmin ? "👑" : userFullName ? userFullName.charAt(0).toUpperCase() : "U"}
                 </div>
-                <span className="hidden sm:inline-block max-w-[120px] truncate text-foreground font-medium">
+                <span className="hidden sm:inline-block max-w-[140px] truncate text-foreground font-medium">
                   {userFullName}
                 </span>
               </DropdownMenuTrigger>
@@ -291,6 +284,13 @@ export default function DashboardLayout({
 
                 <DropdownMenuSeparator />
 
+                {/* Menu Setting Profil */}
+                <DropdownMenuItem onClick={() => router.push("/profile")} className="cursor-pointer">
+                  <UserCog className="mr-2 h-4 w-4 text-primary" />
+                  <span className="font-medium">Setting Profil</span>
+                </DropdownMenuItem>
+
+                {/* Menu Kelola Kelompok & Peran */}
                 <DropdownMenuItem onClick={() => router.push("/groups")} className="cursor-pointer">
                   <Users className="mr-2 h-4 w-4" />
                   <span>Kelola Kelompok & Peran</span>
@@ -298,13 +298,14 @@ export default function DashboardLayout({
 
                 <DropdownMenuSeparator />
 
+                {/* Menu Keluar Akun -> Mengarah ke Beranda (/) */}
                 <DropdownMenuItem
                   variant="destructive"
                   onClick={handleLogout}
                   className="cursor-pointer"
                 >
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>Keluar Akun</span>
+                  <span className="font-medium">Keluar</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
