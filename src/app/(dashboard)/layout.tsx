@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -17,6 +17,8 @@ import {
   LogOut,
   Building2,
   Loader2,
+  Users,
+  Baby,
 } from "lucide-react"
 
 export default function DashboardLayout({
@@ -25,6 +27,7 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   const router = useRouter()
+  const pathname = usePathname()
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [userFullName, setUserFullName] = useState<string | null>(null)
   const [groupName, setGroupName] = useState<string | null>(null)
@@ -126,8 +129,34 @@ export default function DashboardLayout({
               </div>
             </Link>
 
+            {/* Nav Menu */}
+            <nav className="hidden sm:flex items-center gap-1">
+              <Link
+                href="/dashboard"
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                  pathname === "/dashboard" || pathname.startsWith("/children")
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                }`}
+              >
+                <Baby className="h-3.5 w-3.5" />
+                <span>Data Anak</span>
+              </Link>
+              <Link
+                href="/groups"
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                  pathname.startsWith("/groups")
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                }`}
+              >
+                <Users className="h-3.5 w-3.5" />
+                <span>Kelompok & Anggota</span>
+              </Link>
+            </nav>
+
             {groupName && (
-              <div className="hidden md:flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+              <div className="hidden lg:flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
                 <Building2 className="h-3.5 w-3.5" />
                 <span>{groupName}</span>
               </div>
