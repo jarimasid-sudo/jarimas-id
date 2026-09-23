@@ -14,12 +14,12 @@ import {
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { Loader2, ArrowLeft, CheckCircle2, AlertCircle, Mail } from "lucide-react"
+import { Loader2, ArrowLeft, CheckCircle2, AlertCircle, Mail, Info } from "lucide-react"
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
   const [mode, setMode] = useState<"reset" | "resend_confirmation">("reset")
-  const [statusMsg, setStatusMsg] = useState<{ type: "success" | "error"; text: string } | null>(null)
+  const [statusMsg, setStatusMsg] = useState<{ type: "success" | "error"; text: string; isRateLimit?: boolean } | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -43,7 +43,15 @@ export default function ForgotPasswordPage() {
         })
 
         if (error) {
-          setStatusMsg({ type: "error", text: error.message })
+          const msg = error.message.toLowerCase()
+          const isRateLimit = msg.includes("rate limit") || msg.includes("over_email_send_rate_limit")
+          setStatusMsg({
+            type: "error",
+            text: isRateLimit
+              ? "Batas pengiriman email Supabase tercapai (Email rate limit exceeded). Supabase membatasi jumlah email per jam. Silakan tunggu beberapa saat atau hubungi administrator untuk mengubah password via Supabase Dashboard."
+              : error.message,
+            isRateLimit,
+          })
         } else {
           setStatusMsg({
             type: "success",
@@ -60,7 +68,15 @@ export default function ForgotPasswordPage() {
         })
 
         if (error) {
-          setStatusMsg({ type: "error", text: error.message })
+          const msg = error.message.toLowerCase()
+          const isRateLimit = msg.includes("rate limit") || msg.includes("over_email_send_rate_limit")
+          setStatusMsg({
+            type: "error",
+            text: isRateLimit
+              ? "Batas pengiriman email Supabase tercapai (Email rate limit exceeded). Silakan konfirmasi akun langsung melalui Supabase Dashboard (Auth > Users > Confirm Email)."
+              : error.message,
+            isRateLimit,
+          })
         } else {
           setStatusMsg({
             type: "success",
@@ -70,7 +86,15 @@ export default function ForgotPasswordPage() {
       }
     } catch (err: unknown) {
       if (err instanceof Error) {
-        setStatusMsg({ type: "error", text: err.message })
+        const msg = err.message.toLowerCase()
+        const isRateLimit = msg.includes("rate limit")
+        setStatusMsg({
+          type: "error",
+          text: isRateLimit
+            ? "Batas pengiriman email Supabase tercapai. Silakan coba kembali beberapa saat lagi."
+            : err.message,
+          isRateLimit,
+        })
       } else {
         setStatusMsg({
           type: "error",
@@ -134,18 +158,31 @@ export default function ForgotPasswordPage() {
 
           {statusMsg && (
             <div
-              className={`flex items-start gap-2.5 rounded-lg border p-3 text-sm ${
+              className={`space-y-2 rounded-lg border p-3.5 text-sm ${
                 statusMsg.type === "success"
                   ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-300"
                   : "bg-destructive/15 border-destructive/30 text-destructive"
               }`}
             >
-              {statusMsg.type === "success" ? (
-                <CheckCircle2 className="h-5 w-5 shrink-0 mt-0.5 text-emerald-600" />
-              ) : (
-                <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
+              <div className="flex items-start gap-2.5">
+                {statusMsg.type === "success" ? (
+                  <CheckCircle2 className="h-5 w-5 shrink-0 mt-0.5 text-emerald-600" />
+                ) : (
+                  <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
+                )}
+                <span>{statusMsg.text}</span>
+              </div>
+
+              {statusMsg.isRateLimit && (
+                <div className="pt-2 border-t border-destructive/20 text-xs text-foreground/90 space-y-1">
+                  <p className="font-semibold flex items-center gap-1">
+                    <Info className="h-3.5 w-3.5 text-primary shrink-0" /> Tips Mengatasi:
+                  </p>
+                  <p>
+                    Anda dapat langsung mengonfirmasi email atau mereset kata sandi akun di <strong>Supabase Dashboard &gt; Authentication &gt; Users &gt; [User] &gt; Confirm Email / Send Recovery</strong>.
+                  </p>
+                </div>
               )}
-              <span>{statusMsg.text}</span>
             </div>
           )}
 

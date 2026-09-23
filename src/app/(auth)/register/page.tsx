@@ -15,7 +15,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { Loader2, Eye, EyeOff, CheckCircle2, AlertCircle } from "lucide-react"
+import { Loader2, Eye, EyeOff, CheckCircle2, AlertCircle, Info } from "lucide-react"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -24,12 +24,14 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const [isRateLimit, setIsRateLimit] = useState(false)
   const [successInfo, setSuccessInfo] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setErrorMsg(null)
+    setIsRateLimit(false)
     setSuccessInfo(null)
     setIsLoading(true)
 
@@ -50,7 +52,15 @@ export default function RegisterPage() {
       })
 
       if (error) {
-        setErrorMsg(error.message)
+        const msg = error.message.toLowerCase()
+        if (msg.includes("rate limit") || msg.includes("over_email_send_rate_limit")) {
+          setIsRateLimit(true)
+          setErrorMsg(
+            "Batas pengiriman email sistem Supabase telah tercapai (Email Rate Limit Exceeded). Server bawaan Supabase membatasi pengiriman email per jam."
+          )
+        } else {
+          setErrorMsg(error.message)
+        }
         setIsLoading(false)
         return
       }
@@ -70,7 +80,15 @@ export default function RegisterPage() {
       }
     } catch (err: unknown) {
       if (err instanceof Error) {
-        setErrorMsg(err.message)
+        const msg = err.message.toLowerCase()
+        if (msg.includes("rate limit")) {
+          setIsRateLimit(true)
+          setErrorMsg(
+            "Batas pengiriman email sistem Supabase tercapai. Silakan coba beberapa saat lagi atau nonaktifkan 'Confirm email' pada Supabase Dashboard."
+          )
+        } else {
+          setErrorMsg(err.message)
+        }
       } else {
         setErrorMsg("Terjadi kesalahan yang tidak terduga. Silakan coba lagi.")
       }
@@ -92,9 +110,25 @@ export default function RegisterPage() {
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           {errorMsg && (
-            <div className="flex items-start gap-2 rounded-lg bg-destructive/15 border border-destructive/30 p-3 text-sm text-destructive">
-              <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
-              <span>{errorMsg}</span>
+            <div className="space-y-2 rounded-lg bg-destructive/15 border border-destructive/30 p-3.5 text-sm text-destructive">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold">{isRateLimit ? "Batas Email Tercapai" : "Pendaftaran Gagal"}</p>
+                  <p className="mt-0.5">{errorMsg}</p>
+                </div>
+              </div>
+
+              {isRateLimit && (
+                <div className="mt-2.5 pt-2.5 border-t border-destructive/20 text-xs text-foreground/90 space-y-1">
+                  <p className="font-semibold flex items-center gap-1">
+                    <Info className="h-3.5 w-3.5 text-primary shrink-0" /> Solusi Cepat (Supabase Dashboard):
+                  </p>
+                  <p>
+                    Buka <strong>Authentication &gt; Providers &gt; Email</strong> lalu matikan opsi <strong>&quot;Confirm email&quot;</strong>. Registrasi akan langsung aktif tanpa perlu mengirim email.
+                  </p>
+                </div>
+              )}
             </div>
           )}
 

@@ -15,7 +15,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { Loader2, Eye, EyeOff, AlertCircle, HelpCircle } from "lucide-react"
+import { Loader2, Eye, EyeOff, AlertCircle, HelpCircle, Info } from "lucide-react"
 
 function LoginForm() {
   const router = useRouter()
@@ -27,6 +27,7 @@ function LoginForm() {
   const [infoMsg, setInfoMsg] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isCredentialError, setIsCredentialError] = useState(false)
+  const [isRateLimit, setIsRateLimit] = useState(false)
 
   useEffect(() => {
     const errorParam = searchParams.get("error")
@@ -40,6 +41,7 @@ function LoginForm() {
     setErrorMsg(null)
     setInfoMsg(null)
     setIsCredentialError(false)
+    setIsRateLimit(false)
     setIsLoading(true)
 
     const cleanEmail = email.trim().toLowerCase()
@@ -52,9 +54,15 @@ function LoginForm() {
       })
 
       if (error) {
-        if (
-          error.message.toLowerCase().includes("invalid login credentials") ||
-          error.message.toLowerCase().includes("invalid grant")
+        const msg = error.message.toLowerCase()
+        if (msg.includes("rate limit") || msg.includes("over_email_send_rate_limit")) {
+          setIsRateLimit(true)
+          setErrorMsg(
+            "Batas pengiriman email atau percobaan masuk Supabase tercapai (Rate Limit). Silakan tunggu beberapa saat atau atur password langsung via Supabase Dashboard."
+          )
+        } else if (
+          msg.includes("invalid login credentials") ||
+          msg.includes("invalid grant")
         ) {
           setIsCredentialError(true)
           setErrorMsg(
@@ -73,7 +81,13 @@ function LoginForm() {
       }
     } catch (err: unknown) {
       if (err instanceof Error) {
-        setErrorMsg(err.message)
+        const msg = err.message.toLowerCase()
+        if (msg.includes("rate limit")) {
+          setIsRateLimit(true)
+          setErrorMsg("Batas percobaan sistem tercapai. Silakan coba beberapa saat lagi.")
+        } else {
+          setErrorMsg(err.message)
+        }
       } else {
         setErrorMsg("Terjadi kesalahan yang tidak terduga. Silakan coba lagi.")
       }
@@ -115,6 +129,16 @@ function LoginForm() {
                     <HelpCircle className="h-3.5 w-3.5" />
                     Lupa Password / Kirim Ulang Email Konfirmasi?
                   </Link>
+                </div>
+              )}
+              {isRateLimit && (
+                <div className="pt-2 border-t border-destructive/20 text-xs text-foreground/90 space-y-1">
+                  <p className="font-semibold flex items-center gap-1">
+                    <Info className="h-3.5 w-3.5 text-primary shrink-0" /> Panduan:
+                  </p>
+                  <p>
+                    Jika email Anda belum dikonfirmasi di Supabase, buka <strong>Supabase Dashboard &gt; Authentication &gt; Users &gt; Confirm Email</strong>.
+                  </p>
                 </div>
               )}
             </div>
