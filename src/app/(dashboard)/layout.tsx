@@ -20,6 +20,9 @@ import {
   Users,
   Baby,
   BarChart3,
+  Crown,
+  ShieldCheck,
+  UserCheck,
 } from "lucide-react"
 
 export default function DashboardLayout({
@@ -32,6 +35,8 @@ export default function DashboardLayout({
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [userFullName, setUserFullName] = useState<string | null>(null)
   const [groupName, setGroupName] = useState<string | null>(null)
+  const [userRole, setUserRole] = useState<string>("member")
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -48,18 +53,19 @@ export default function DashboardLayout({
           return
         }
 
-        setUserEmail(user.email ?? null)
+        const email = user.email ?? null
+        setUserEmail(email)
         setUserFullName(
           user.user_metadata?.full_name ??
             user.user_metadata?.name ??
-            user.email?.split("@")[0] ??
+            email?.split("@")[0] ??
             "Pengguna"
         )
 
-        // Ambil profil & grup jika ada
+        // Cek profil pengguna
         const { data: profile } = await supabase
           .from("profiles")
-          .select("full_name, onboarding_completed")
+          .select("full_name, role, is_super_admin, onboarding_completed")
           .eq("id", user.id)
           .single()
 
@@ -67,7 +73,7 @@ export default function DashboardLayout({
           setUserFullName(profile.full_name)
         }
 
-        // Ambil data grup anggota
+        // Ambil data keanggotaan grup
         const { data: member } = await supabase
           .from("group_members")
           .select("groups(name, type), role")
@@ -75,12 +81,33 @@ export default function DashboardLayout({
           .limit(1)
           .single()
 
+        let detectedRole = "member"
+        if (member?.role) {
+          detectedRole = member.role.toLowerCase()
+        } else if (profile?.role) {
+          detectedRole = profile.role.toLowerCase()
+        }
+
+        // Deteksi Super Admin (berdasarkan email primer, flag db, atau metadata role)
+        const superAdminCheck =
+          email === "kreasi.hambali@gmail.com" ||
+          detectedRole === "super_admin" ||
+          detectedRole === "superadmin" ||
+          profile?.is_super_admin === true ||
+          user.user_metadata?.role === "super_admin"
+
+        if (superAdminCheck) {
+          detectedRole = "super_admin"
+          setIsSuperAdmin(true)
+        }
+        setUserRole(detectedRole)
+
         if (member?.groups) {
           const g = member.groups as unknown as { name?: string; type?: string }
           setGroupName(g.name ?? null)
         }
       } catch {
-        // Fallback
+        // Fallback jika ada error
       } finally {
         setIsLoading(false)
       }
@@ -98,6 +125,34 @@ export default function DashboardLayout({
     } catch {
       router.push("/login")
     }
+  }
+
+  // Render Badge Peran
+  const renderRoleBadge = () => {
+    if (isSuperAdmin || userRole === "super_admin") {
+      return (
+        <div className="inline-flex items-center gap-1.5 rounded-full bg-linear-to-r from-amber-500/15 via-orange-500/15 to-amber-500/15 px-2.5 py-1 text-xs font-bold text-amber-700 dark:text-amber-300 border border-amber-500/30 shadow-xs">
+          <Crown className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
+          <span>SUPER ADMIN</span>
+        </div>
+      )
+    }
+
+    if (userRole === "admin") {
+      return (
+        <div className="inline-flex items-center gap-1.5 rounded-full bg-teal-500/15 px-2.5 py-1 text-xs font-semibold text-teal-700 dark:text-teal-300 border border-teal-500/30">
+          <ShieldCheck className="h-3.5 w-3.5 text-teal-600" />
+          <span>ADMIN KELOMPOK</span>
+        </div>
+      )
+    }
+
+    return (
+      <div className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground border border-border">
+        <UserCheck className="h-3.5 w-3.5" />
+        <span>KADER / ANGGOTA</span>
+      </div>
+    )
   }
 
   if (isLoading) {
@@ -152,7 +207,7 @@ export default function DashboardLayout({
                 }`}
               >
                 <Users className="h-3.5 w-3.5" />
-                <span>Kelompok & Anggota</span>
+                <span>Kelompok & Peran</span>
               </Link>
               <Link
                 href="/reports"
@@ -177,39 +232,72 @@ export default function DashboardLayout({
 
           {/* User Profile & Menu */}
           <div className="flex items-center gap-3">
+            {/* Penanda Peran Visual di Header */}
+            <div className="hidden md:flex items-center">
+              {renderRoleBadge()}
+            </div>
+
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={
                   <Button
                     variant="outline"
-                    className="flex items-center gap-2 h-9 px-3 rounded-full text-xs font-medium"
+                    className="flex items-center gap-2 h-9 px-3 rounded-full text-xs font-medium border-border/80"
                   />
                 }
               >
-                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-xs">
-                  {userFullName ? userFullName.charAt(0).toUpperCase() : "U"}
+                <div className={`flex h-6 w-6 items-center justify-center rounded-full font-bold text-xs ${
+                  isSuperAdmin
+                    ? "bg-amber-500/20 text-amber-600 dark:text-amber-400"
+                    : "bg-primary/10 text-primary"
+                }`}>
+                  {isSuperAdmin ? "👑" : userFullName ? userFullName.charAt(0).toUpperCase() : "U"}
                 </div>
                 <span className="hidden sm:inline-block max-w-[120px] truncate text-foreground font-medium">
                   {userFullName}
                 </span>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuContent align="end" className="w-64">
                 <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-semibold leading-none">{userFullName}</p>
-                    <p className="text-xs leading-none text-muted-foreground">{userEmail}</p>
+                  <div className="flex flex-col space-y-1.5 py-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-semibold leading-none truncate">{userFullName}</p>
+                      {isSuperAdmin && (
+                        <span className="shrink-0 rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-300">
+                          SUPER ADMIN
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs leading-none text-muted-foreground truncate">{userEmail}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {groupName && (
-                  <>
-                    <DropdownMenuItem disabled className="text-xs text-muted-foreground">
-                      <Building2 className="mr-2 h-3.5 w-3.5" />
-                      <span>{groupName}</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                  </>
-                )}
+
+                {/* Info Hak Akses di Dropdown */}
+                <div className="px-2 py-1.5 text-xs text-muted-foreground bg-muted/40 rounded-sm mx-1 my-1">
+                  <span className="block font-semibold text-foreground mb-0.5">Status Hak Akses:</span>
+                  {isSuperAdmin ? (
+                    <span className="text-amber-600 dark:text-amber-400 font-medium">
+                      👑 Akses Penuh Seluruh Sistem & Seluruh Kelompok
+                    </span>
+                  ) : userRole === "admin" ? (
+                    <span className="text-teal-600 dark:text-teal-400 font-medium">
+                      🛡️ Admin Kelompok ({groupName || "Semua"})
+                    </span>
+                  ) : (
+                    <span>Kader / Anggota Penginput Data</span>
+                  )}
+                </div>
+
+                <DropdownMenuSeparator />
+
+                <DropdownMenuItem onClick={() => router.push("/groups")} className="cursor-pointer">
+                  <Users className="mr-2 h-4 w-4" />
+                  <span>Kelola Kelompok & Peran</span>
+                </DropdownMenuItem>
+
+                <DropdownMenuSeparator />
+
                 <DropdownMenuItem
                   variant="destructive"
                   onClick={handleLogout}
