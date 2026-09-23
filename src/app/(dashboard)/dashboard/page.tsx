@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import {
   Card,
@@ -57,6 +58,7 @@ import {
   Loader2,
   UserPlus,
   FileText,
+  Eye,
 } from "lucide-react"
 
 export interface ChildData {
@@ -579,9 +581,12 @@ export default function DashboardPage() {
                         <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-semibold">
                           {child.full_name?.charAt(0).toUpperCase() || "?"}
                         </div>
-                        <span className="truncate max-w-[180px] sm:max-w-none">
+                        <Link
+                          href={`/children/${child.id}`}
+                          className="truncate max-w-[180px] sm:max-w-none hover:underline font-semibold text-foreground hover:text-primary transition-colors"
+                        >
                           {child.full_name}
-                        </span>
+                        </Link>
                       </div>
                     </TableCell>
 
@@ -638,7 +643,17 @@ export default function DashboardPage() {
                             <MoreVertical className="h-4 w-4" />
                             <span className="sr-only">Buka menu aksi</span>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuContent align="end" className="w-52">
+                            <DropdownMenuItem
+                              onClick={() => router.push(`/children/${child.id}`)}
+                              className="text-xs cursor-pointer font-medium"
+                            >
+                              <Eye className="mr-2 h-3.5 w-3.5 text-primary" />
+                              <span>Lihat Detail Profil</span>
+                            </DropdownMenuItem>
+
+                            <DropdownMenuSeparator />
+
                             <DropdownMenuLabel className="text-xs">
                               Status Verifikasi
                             </DropdownMenuLabel>
